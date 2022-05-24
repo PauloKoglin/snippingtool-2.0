@@ -4,7 +4,7 @@ interface
 
 uses
   Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes, Vcl.Graphics,
-  Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.ExtCtrls, Clipbrd, Vcl.StdCtrls, jpeg;
+  Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.ExtCtrls, Clipbrd, Vcl.StdCtrls, jpeg, System.UITypes;
 
 type
   TWindowCaptureFunction = function(const aAchseX, aAchseY, aBreite, aHohe: Integer): TBitmap;
@@ -105,14 +105,35 @@ end;
 procedure TfrmCapture.FormMouseUp(Sender: TObject; Button: TMouseButton;
   Shift: TShiftState; X, Y: Integer);
 begin
-  Self.Visible := False;
-  FPrint := WindowCapture(
-    FX,
-    FY,
-    X,
-    Y
-    );
-  Close;
+  try
+    try
+      Self.Visible := False;
+      FPrint := WindowCapture(
+      FX,
+      FY,
+      X,
+      Y
+      );
+      Close;
+    except
+      on EOutOfResources do
+        if MessageDlg('Invalid area.'#13#10'Try again.',
+        mtError, mbOKCancel, 0) = mrOk then
+        begin
+          Exit;
+        end;
+
+      on EAccessViolation do
+        if MessageDlg('Invalid area.'#13#10'Try again.',
+        mtError, mbOKCancel, 0) = mrOk then
+        begin
+          Exit;
+        end;
+    end;
+  finally
+    Close;
+    Self.Visible := True;
+  end;
 end;
 
 procedure TfrmCapture.FormShow(Sender: TObject);
